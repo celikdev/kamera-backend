@@ -5,7 +5,7 @@ const cameraSchema = mongoose.Schema({
   cameraRotation: String,
   cameraCoordinate: Object,
   cameraIP: String,
-  cameraPing: Boolean,
+  cameraStatus: Boolean,
 });
 
 const Camera = mongoose.model("Camera", cameraSchema);

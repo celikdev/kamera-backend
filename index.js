@@ -20,26 +20,38 @@ mongoose.connect(
   console.log("Connected To MongoDB")
 );
 
-Camera.find().then((camera) => {
-  camera.forEach((host) => {
-    ping.sys.probe(host.cameraIP, (alive) => {
-      console.log(host.cameraIP + alive);
+const checkCameraStatus = async () => {
+  await Camera.find().then((camera) => {
+    camera.forEach((host) => {
+      ping.sys.probe(host.cameraIP, async (cameraStatus) => {
+        await Camera.findById(host._id).then((camera) => {
+          if (cameraStatus) {
+            camera.cameraStatus = true;
+          } else {
+            camera.cameraStatus = false;
+          }
+          camera.save();
+        });
+      });
     });
   });
-});
+};
 
 app.get("/", async (req, res) => {
   await Camera.find().then((cameraData) => res.status(200).json(cameraData));
 });
 
-app.post("/", async (req, res) => {
+app.post("/", (req, res) => {
   const { cameraName, cameraCoordinate, cameraRotation, cameraIP } = req.body;
-  await Camera.create({
-    cameraName,
-    cameraCoordinate,
-    cameraRotation,
-    cameraIP,
-  }).then((response) => res.status(200).json(response));
+  ping.sys.probe(cameraIP, async (cameraStatus) => {
+    await Camera.create({
+      cameraName,
+      cameraCoordinate,
+      cameraRotation,
+      cameraIP,
+      cameraStatus,
+    }).then((response) => res.status(200).json(response));
+  });
 });
 
 app.delete("/:id", async (req, res) => {
